@@ -1002,6 +1002,23 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
             </div>
 
             <div class="form-group">
+              <label for="inputFrameEmote">Emote / Emoji Frame</label>
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <input type="text" id="inputFrameEmote" value="🖼️" placeholder="Ketik atau pilih emoji..." style="width: 80px; text-align: center; font-size: 1.5rem; padding: 6px; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-md); outline: none;">
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;" id="quickEmotes">
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('🌸')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">🌸</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('💖')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">💖</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('✨')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">✨</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('🎉')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">🎉</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('🧸')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">🧸</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('🌈')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">🌈</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('🐱')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">🐱</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('🍀')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">🍀</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
               <label for="inputFrameName">Nama Frame Kustom</label>
               <input type="text" id="inputFrameName" placeholder="Contoh: Frame Valentine Pink">
             </div>
@@ -1386,6 +1403,13 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
       strip.style.background = bgColor;
     }
 
+    function setFrameEmote(emoji) {
+      const input = document.getElementById('inputFrameEmote');
+      if (input) {
+        input.value = emoji;
+      }
+    }
+
     let mockupTestPhotos = []; // stores custom test photos loaded by admin
 
     function triggerTestPhotoUpload() {
@@ -1540,6 +1564,9 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
         elements.inputFrameName.focus();
         return;
       }
+      const emoteInput = document.getElementById('inputFrameEmote');
+      const emote = emoteInput ? emoteInput.value.trim() || '🖼️' : '🖼️';
+      const combinedName = emote + '|' + name;
 
       if (!state.hasDatabaseUrl) {
         alert('Gagal: Database Google Sheets belum terhubung!');
@@ -1553,7 +1580,7 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
         const payload = {
           action: 'uploadCustomFrame',
           image: state.uploadedFrameBase64,
-          frameName: name
+          frameName: combinedName
         };
 
         const response = await fetch('api.php', {
@@ -1577,6 +1604,7 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
           state.uploadedFrameBase64 = '';
           elements.inputFrameFile.value = '';
           elements.inputFrameName.value = '';
+          if (emoteInput) emoteInput.value = '🖼️';
           elements.lblFrameFile.textContent = 'Tarik & lepas file PNG Anda di sini atau klik untuk pilih';
           elements.mockupFrameOverlay.src = '';
           elements.mockupFrameOverlay.style.display = 'none';
@@ -1612,11 +1640,16 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
         // Load direct image bypass via local proxy proxyImage GET endpoint to prevent canvas mixed content blocks
         const proxiedUrl = 'api.php?action=proxyImage&url=' + encodeURIComponent(frame.url);
         
+        // Parse combined name for emote
+        const parts = frame.name.split('|');
+        const emoji = parts.length > 1 ? parts[0] : '🖼️';
+        const displayName = parts.length > 1 ? parts.slice(1).join('|') : frame.name;
+
         card.innerHTML = `
           <div class="frame-card-thumb">
-            <img src="${proxiedUrl}" alt="${frame.name}">
+            <img src="${proxiedUrl}" alt="${displayName}">
           </div>
-          <div class="frame-card-name" title="${frame.name}">${frame.name}</div>
+          <div class="frame-card-name" title="${displayName}">${emoji} ${displayName}</div>
           <div class="frame-card-id">${frame.id}</div>
         `;
         grid.appendChild(card);

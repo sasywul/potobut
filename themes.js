@@ -307,17 +307,17 @@ const PhotoThemes = (() => {
       ctx.restore();
     }
 
-    // --- 4. Draw Foreground Theme Decorations (Drawn OVER photos & footer) ---
-    ctx.save();
-    drawForegroundDecorations(ctx, themeId, w, h, padding, photoH, gap, frameCount, footerH, adminConfig);
-    ctx.restore();
-
-    // --- 5. Draw Custom Google Drive PNG Frame Overlay (If active & loaded) ---
+    // --- 4. Draw Custom Google Drive PNG Frame Overlay (If active & loaded) ---
     if (themeId.startsWith('FRM_') || themeId.startsWith('FRM-')) {
       if (loadedFrames && loadedFrames[themeId] && loadedFrames[themeId] !== 'loading') {
         ctx.drawImage(loadedFrames[themeId], 0, 0, w, h);
       }
     }
+
+    // --- 5. Draw Foreground Theme Decorations (Drawn OVER photos, custom frame & footer) ---
+    ctx.save();
+    drawForegroundDecorations(ctx, themeId, w, h, padding, photoH, gap, frameCount, footerH, adminConfig);
+    ctx.restore();
   }
 
   // --- Theme Background Painters ---

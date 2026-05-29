@@ -850,6 +850,8 @@
     branding.style.alignItems = 'center';
     branding.style.gap = '2px';
     
+    const isCustomFrame = state.selectedTheme.startsWith('FRM_') || state.selectedTheme.startsWith('FRM-');
+
     const themeTitles = {
       classic: state.settings.active_watermark || 'potobut ✦',
       mario: 'SUPER MARIO 🍄',
@@ -860,7 +862,11 @@
     };
     
     const mainBrandingText = document.createElement('div');
-    mainBrandingText.textContent = themeTitles[state.selectedTheme || 'classic'] || 'potobut ✦';
+    if (isCustomFrame) {
+      mainBrandingText.textContent = state.settings.active_watermark || 'potobut ✦';
+    } else {
+      mainBrandingText.textContent = themeTitles[state.selectedTheme || 'classic'] || 'potobut ✦';
+    }
     
     if ((state.selectedTheme || 'classic') === 'mario') {
       mainBrandingText.style.color = '#FDE100';
@@ -1271,13 +1277,17 @@
 
     // 2. Append new dynamic custom frames from state
     state.customFrames.forEach(frame => {
+      const parts = frame.name.split('|');
+      const emoji = parts.length > 1 ? parts[0] : '🖼️';
+      const displayName = parts.length > 1 ? parts.slice(1).join('|') : frame.name;
+
       const btn = document.createElement('button');
       btn.className = `theme-preset-btn${state.selectedTheme === frame.id ? ' active' : ''}`;
       btn.dataset.theme = frame.id;
-      btn.title = frame.name;
+      btn.title = displayName;
       btn.innerHTML = `
-        <span class="preset-icon">🖼️</span>
-        <span class="preset-name">${frame.name}</span>
+        <span class="preset-icon">${emoji}</span>
+        <span class="preset-name">${displayName}</span>
       `;
       grid.appendChild(btn);
     });
@@ -1428,14 +1438,18 @@
     }
 
     state.customFrames.forEach(frame => {
+      const parts = frame.name.split('|');
+      const emoji = parts.length > 1 ? parts[0] : '🖼️';
+      const displayName = parts.length > 1 ? parts.slice(1).join('|') : frame.name;
+
       const card = document.createElement('div');
       card.className = 'active-frame-card';
       
       card.innerHTML = `
         <div class="frame-thumb">
-          <img src="/api?action=proxyImage&url=${encodeURIComponent(frame.url)}" alt="${frame.name}">
+          <img src="/api?action=proxyImage&url=${encodeURIComponent(frame.url)}" alt="${displayName}">
         </div>
-        <div class="frame-title" title="${frame.name}">${frame.name}</div>
+        <div class="frame-title" title="${displayName}">${emoji} ${displayName}</div>
       `;
       grid.appendChild(card);
     });

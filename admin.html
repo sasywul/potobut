@@ -303,6 +303,23 @@
             </div>
 
             <div class="form-group">
+              <label for="inputFrameEmote">Emote / Emoji Frame</label>
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <input type="text" id="inputFrameEmote" value="🖼️" placeholder="Ketik atau pilih emoji..." style="width: 80px; text-align: center; font-size: 1.5rem; padding: 6px; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-md); outline: none;">
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;" id="quickEmotes">
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('🌸')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">🌸</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('💖')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">💖</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('✨')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">✨</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('🎉')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">🎉</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('🧸')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">🧸</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('🌈')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">🌈</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('🐱')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">🐱</button>
+                  <button type="button" class="btn-admin-action-inline" onclick="setFrameEmote('🍀')" style="font-size: 1.1rem; padding: 4px 8px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius-sm);">🍀</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
               <label for="inputFrameName">Nama Frame Kustom</label>
               <input type="text" id="inputFrameName" placeholder="Contoh: Frame Valentine Pink">
             </div>
@@ -868,6 +885,13 @@
       document.getElementById('photoStripMockup').style.background = bgColor;
     }
 
+    function setFrameEmote(emoji) {
+      const input = document.getElementById('inputFrameEmote');
+      if (input) {
+        input.value = emoji;
+      }
+    }
+
     function triggerTestPhotoUpload() {
       const input = document.getElementById('inputTestPhoto');
       if (input) input.click();
@@ -1041,6 +1065,10 @@
       if (!state.uploadedFrameBase64) { alert('Pilih/tarik file PNG terlebih dahulu!'); return; }
       const name = elements.inputFrameName.value.trim();
       if (!name) { alert('Tulis nama frame terlebih dahulu!'); elements.inputFrameName.focus(); return; }
+      const emoteInput = document.getElementById('inputFrameEmote');
+      const emote = emoteInput ? emoteInput.value.trim() || '🖼️' : '🖼️';
+      const combinedName = emote + '|' + name;
+
       if (!state.hasDatabaseUrl) { alert('Gagal: Database Google Sheets belum terhubung!'); return; }
 
       elements.btnUploadFrame.disabled = true;
@@ -1050,7 +1078,7 @@
         const response = await fetch(API_BASE, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'uploadCustomFrame', image: state.uploadedFrameBase64, frameName: name })
+          body: JSON.stringify({ action: 'uploadCustomFrame', image: state.uploadedFrameBase64, frameName: combinedName })
         });
         const res = await response.json();
 
@@ -1060,6 +1088,7 @@
           state.uploadedFrameBase64 = '';
           elements.inputFrameFile.value = '';
           elements.inputFrameName.value = '';
+          if (emoteInput) emoteInput.value = '🖼️';
           elements.lblFrameFile.textContent = 'Tarik & lepas file PNG Anda di sini atau klik untuk pilih';
           elements.mockupFrameOverlay.src = '';
           elements.mockupFrameOverlay.style.display = 'none';
@@ -1086,11 +1115,17 @@
       }
       state.customFrames.forEach(frame => {
         const proxiedUrl = API_BASE + '?action=proxyImage&url=' + encodeURIComponent(frame.url);
+        
+        // Parse combined name for emote
+        const parts = frame.name.split('|');
+        const emoji = parts.length > 1 ? parts[0] : '🖼️';
+        const displayName = parts.length > 1 ? parts.slice(1).join('|') : frame.name;
+
         const card = document.createElement('div');
         card.className = 'frame-card';
         card.innerHTML = `
-          <div class="frame-card-thumb"><img src="${proxiedUrl}" alt="${frame.name}"></div>
-          <div class="frame-card-name" title="${frame.name}">${frame.name}</div>
+          <div class="frame-card-thumb"><img src="${proxiedUrl}" alt="${displayName}"></div>
+          <div class="frame-card-name" title="${displayName}">${emoji} ${displayName}</div>
           <div class="frame-card-id">${frame.id}</div>
         `;
         grid.appendChild(card);
