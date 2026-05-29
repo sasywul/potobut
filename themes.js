@@ -164,7 +164,7 @@ const PhotoThemes = (() => {
       // Filter out narrow noise spans (e.g. transparent divider lines)
       if (spans.length > 0) {
         const maxSpanH = Math.max(...spans.map(s => s.height));
-        spans = spans.filter(s => s.height >= maxSpanH * 0.6); // Must be at least 60% of the largest slot height
+        spans = spans.filter(s => s.height >= maxSpanH * 0.8); // Must be at least 80% of the largest slot height
       }
 
       // We accept any number of slots between 2 and 8!
