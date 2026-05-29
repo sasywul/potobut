@@ -80,7 +80,7 @@ const PhotoThemes = (() => {
   /**
    * Helper: Analyze custom frame transparent slots dynamically
    */
-  function detectTransparentWindows(frameImg, frameCount) {
+  function detectTransparentWindows(frameImg) {
     try {
       const W = frameImg.width;
       const H = frameImg.height;
@@ -136,14 +136,15 @@ const PhotoThemes = (() => {
         }
       }
 
-      if (spans.length !== frameCount) {
-        console.warn(`Detected ${spans.length} transparent slots, expected ${frameCount}. Falling back to dynamic math.`);
+      // We accept any number of slots between 2 and 8!
+      if (spans.length < 2 || spans.length > 8) {
+        console.warn(`Detected non-standard number of transparent slots: ${spans.length}`);
         return null;
       }
 
       // 3. Find horizontal bounds for each slot
       const windows = [];
-      for (let i = 0; i < frameCount; i++) {
+      for (let i = 0; i < spans.length; i++) {
         const span = spans[i];
         let minX = W;
         let maxX = 0;
@@ -212,10 +213,13 @@ const PhotoThemes = (() => {
     // --- 3. Run Dynamic Transparent Slot Detection for Custom Frames ---
     const isCustom = themeId.startsWith('FRM_') || themeId.startsWith('FRM-');
     const frameImg = isCustom && loadedFrames && loadedFrames[themeId] && loadedFrames[themeId] !== 'loading' ? loadedFrames[themeId] : null;
-    const detectedSlots = frameImg ? detectTransparentWindows(frameImg, frameCount) : null;
+    const detectedSlots = frameImg ? detectTransparentWindows(frameImg) : null;
+
+    // Use detected slots count if available, otherwise fallback to frameCount
+    const slotsCount = detectedSlots ? detectedSlots.length : frameCount;
 
     // --- 4. Draw Captured Photos ---
-    for (let i = 0; i < frameCount; i++) {
+    for (let i = 0; i < slotsCount; i++) {
       ctx.save();
 
       let drawX, drawY, drawW, drawH;
@@ -771,7 +775,8 @@ const PhotoThemes = (() => {
 
   return {
     getAll,
-    renderTheme
+    renderTheme,
+    detectTransparentWindows
   };
 
 })();

@@ -267,6 +267,24 @@
         elements.themePresetsGrid.querySelectorAll('.theme-preset-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         state.selectedTheme = btn.dataset.theme;
+        
+        // Fail-safe auto-detect slots count and adjust state.frameCount if custom frame selected
+        if (state.selectedTheme.startsWith('FRM_') || state.selectedTheme.startsWith('FRM-')) {
+          const frameImg = state.loadedFrames[state.selectedTheme];
+          if (frameImg && frameImg !== 'loading') {
+            const detected = PhotoThemes.detectTransparentWindows(frameImg);
+            if (detected && detected.length !== state.frameCount) {
+              state.frameCount = detected.length;
+              if (elements.cutsDropdown) { elements.cutsDropdown.value = state.frameCount; }
+              // Sync with Halaman 2 cuts selectors
+              elements.submenuKisi.querySelectorAll('.frame-cut-opt').forEach(opt => {
+                opt.classList.toggle('active', parseInt(opt.dataset.count) === state.frameCount);
+              });
+              showStatusMessage(`Layout diubah otomatis ke ${state.frameCount} Foto sesuai bingkai kustom! 📸`, "success");
+            }
+          }
+        }
+        
         updatePhotoStrip();
       }
     });
@@ -1086,8 +1104,18 @@
     img.onload = () => {
       state.loadedFrames[frame.id] = img;
       console.log(`Frame image preloaded: ${frame.id}`);
-      // Refresh UI in case we are on customization screen
+      // Refresh UI and auto-detect slots count in case we are on customization screen
       if (state.selectedTheme === frame.id) {
+        const detected = PhotoThemes.detectTransparentWindows(img);
+        if (detected && detected.length !== state.frameCount) {
+          state.frameCount = detected.length;
+          if (elements.cutsDropdown) { elements.cutsDropdown.value = state.frameCount; }
+          // Sync with Halaman 2 cuts selectors
+          elements.submenuKisi.querySelectorAll('.frame-cut-opt').forEach(opt => {
+            opt.classList.toggle('active', parseInt(opt.dataset.count) === state.frameCount);
+          });
+          showStatusMessage(`Layout diubah otomatis ke ${state.frameCount} Foto sesuai bingkai kustom! 📸`, "success");
+        }
         updatePhotoStrip();
       }
     };
