@@ -1231,6 +1231,54 @@ body {
 .filter-cool { filter: brightness(1.04) saturate(0.85) hue-rotate(12deg); }
 .filter-vintage-pink { filter: sepia(0.3) saturate(1.45) hue-rotate(-18deg) brightness(1.06); }
 
+/* Upgraded Premium Buttons Design */
+.btn-landing-start, .btn-start-capture, .btn-nav-next, .btn-custom-download, .btn-upgrade, .btn-admin-submit {
+  background: linear-gradient(135deg, #FF7A99 0%, #FF5A87 50%, #FF3D6E 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: var(--radius-full) !important;
+  font-family: var(--font-family) !important;
+  transition: all var(--transition-normal) !important;
+  box-shadow: 0 4px 15px rgba(255, 90, 135, 0.4) !important;
+  cursor: pointer !important;
+  outline: none !important;
+}
+
+.btn-landing-start:hover, .btn-start-capture:hover, .btn-nav-next:hover, .btn-custom-download:hover, .btn-upgrade:hover, .btn-admin-submit:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 8px 24px rgba(255, 90, 135, 0.6) !important;
+  background: linear-gradient(135deg, #FF8EA8 0%, #FF6E96 50%, #FF4D7C 100%) !important;
+}
+
+.btn-landing-start:active, .btn-start-capture:active, .btn-nav-next:active, .btn-custom-download:active, .btn-upgrade:active, .btn-admin-submit:active {
+  transform: translateY(0) scale(0.98) !important;
+  box-shadow: 0 3px 10px rgba(255, 90, 135, 0.3) !important;
+}
+
+/* Secondary Button Upgrades */
+.btn-custom-restart {
+  background: var(--white) !important;
+  border: 2px solid var(--pink-primary) !important;
+  color: var(--pink-primary) !important;
+  border-radius: var(--radius-full) !important;
+  font-family: var(--font-family) !important;
+  transition: all var(--transition-normal) !important;
+  box-shadow: 0 4px 12px rgba(255, 90, 135, 0.08) !important;
+  cursor: pointer !important;
+  outline: none !important;
+}
+
+.btn-custom-restart:hover {
+  background: var(--pink-light) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 18px rgba(255, 90, 135, 0.18) !important;
+}
+
+.btn-custom-restart:active {
+  transform: translateY(0) scale(0.98) !important;
+  box-shadow: 0 2px 6px rgba(255, 90, 135, 0.05) !important;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
   .customization-workspace {
@@ -1239,7 +1287,12 @@ body {
     padding: 20px;
   }
   .color-palette-grid, .stickers-stamp-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .workspace-right-controls {
+    width: 100%;
+    max-width: 450px;
+    margin-top: 20px;
   }
 }
 
@@ -1250,6 +1303,9 @@ body {
   }
   .nav-links {
     margin-left: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
   }
   .camera-workspace {
     flex-direction: column;
@@ -1259,14 +1315,23 @@ body {
     flex-direction: row;
     align-self: center;
     margin-bottom: 12px;
+    width: 100%;
+    justify-content: center;
+    gap: 16px;
   }
   .camera-sidebar-right {
     width: 100%;
-    flex-direction: row;
-    overflow-x: auto;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
   }
   .captured-thumbs {
     flex-direction: row;
+    gap: 8px;
+    justify-content: center;
+    width: 100%;
+    overflow-x: auto;
+    padding: 4px;
   }
   .captured-thumb-slot {
     width: 80px;
@@ -1276,6 +1341,61 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 20px;
+  }
+  .landing-title {
+    font-size: 1.8rem;
+  }
+  .landing-subtitle {
+    font-size: 0.95rem;
+  }
+  
+  /* Upgraded Mobile Buttons Layout Halaman 3 */
+  .customization-bottom-actions {
+    flex-direction: row;
+    width: 100%;
+    max-width: 450px;
+    gap: 10px;
+    padding: 0 16px;
+    box-sizing: border-box;
+  }
+  
+  .btn-custom-download, .btn-custom-restart {
+    flex: 1;
+    padding: 12px 10px !important;
+    font-size: 0.92rem !important;
+    min-width: 0 !important;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  
+  /* Mobile camera buttons */
+  .camera-actions-inline {
+    flex-direction: row;
+    gap: 10px;
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .btn-start-capture, .btn-nav-next {
+    flex: 1;
+    padding: 12px 16px !important;
+    font-size: 0.95rem !important;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .color-palette-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .theme-presets-grid {
+    grid-template-columns: 1fr;
   }
 }
 
