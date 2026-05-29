@@ -77,6 +77,116 @@ const PhotoThemes = (() => {
    * @param {Object} adminConfig - Settings config object
    * @param {Object} loadedFrames - Preloaded custom frame images
    */
+  /**
+   * Helper: Analyze custom frame transparent slots dynamically
+   */
+  function detectTransparentWindows(frameImg, frameCount) {
+    try {
+      const W = frameImg.width;
+      const H = frameImg.height;
+      if (!W || !H) return null;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(frameImg, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, W, H);
+      const data = imgData.data;
+
+      // 1. Analyze transparency per row
+      const rowTransparentCount = new Array(H).fill(0);
+      for (let y = 0; y < H; y++) {
+        let transCount = 0;
+        const rowOffset = y * W * 4;
+        for (let x = 0; x < W; x++) {
+          const alpha = data[rowOffset + x * 4 + 3];
+          if (alpha < 120) { // transparent threshold
+            transCount++;
+          }
+        }
+        rowTransparentCount[y] = transCount;
+      }
+
+      // 2. Identify vertical spans of transparent slots
+      const spans = [];
+      let inSpan = false;
+      let spanStart = 0;
+      const minSpanHeight = H * 0.05; // at least 5% of frame height
+      const rowThreshold = W * 0.15;  // at least 15% of width must be transparent
+
+      for (let y = 0; y < H; y++) {
+        const isTrans = rowTransparentCount[y] > rowThreshold;
+        if (isTrans && !inSpan) {
+          inSpan = true;
+          spanStart = y;
+        } else if (!isTrans && inSpan) {
+          inSpan = false;
+          const spanHeight = y - spanStart;
+          if (spanHeight >= minSpanHeight) {
+            spans.push({ top: spanStart, bottom: y, height: spanHeight });
+          }
+        }
+      }
+      if (inSpan) {
+        const spanHeight = H - spanStart;
+        if (spanHeight >= minSpanHeight) {
+          spans.push({ top: spanStart, bottom: H, height: spanHeight });
+        }
+      }
+
+      if (spans.length !== frameCount) {
+        console.warn(`Detected ${spans.length} transparent slots, expected ${frameCount}. Falling back to dynamic math.`);
+        return null;
+      }
+
+      // 3. Find horizontal bounds for each slot
+      const windows = [];
+      for (let i = 0; i < frameCount; i++) {
+        const span = spans[i];
+        let minX = W;
+        let maxX = 0;
+
+        for (let y = span.top; y < span.bottom; y++) {
+          const rowOffset = y * W * 4;
+          for (let x = 0; x < W; x++) {
+            const alpha = data[rowOffset + x * 4 + 3];
+            if (alpha < 120) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+            }
+          }
+        }
+
+        if (minX < maxX) {
+          windows.push({
+            left: minX,
+            top: span.top,
+            width: maxX - minX,
+            height: span.height
+          });
+        } else {
+          return null;
+        }
+      }
+
+      return windows;
+    } catch (e) {
+      console.error("Error in slot transparency detection:", e);
+      return null;
+    }
+  }
+
+  /**
+   * Main theme canvas renderer
+   * @param {string} themeId - Active theme id
+   * @param {HTMLCanvasElement} canvas - Target strip canvas
+   * @param {Array} photos - Array of captured photo canvases/images
+   * @param {string} baseColor - Current selected background color
+   * @param {Object} adminConfig - Settings config object
+   * @param {Object} loadedFrames - Preloaded custom frame images
+   */
   function renderTheme(themeId, canvas, photos, baseColor, adminConfig, loadedFrames) {
     const ctx = canvas.getContext('2d');
     const w = canvas.width;
@@ -99,33 +209,63 @@ const PhotoThemes = (() => {
     drawBackgroundDecorations(ctx, themeId, w, h, padding, photoH, gap, frameCount, footerH);
     ctx.restore();
 
-    // --- 3. Draw Captured Photos ---
+    // --- 3. Run Dynamic Transparent Slot Detection for Custom Frames ---
+    const isCustom = themeId.startsWith('FRM_') || themeId.startsWith('FRM-');
+    const frameImg = isCustom && loadedFrames && loadedFrames[themeId] && loadedFrames[themeId] !== 'loading' ? loadedFrames[themeId] : null;
+    const detectedSlots = frameImg ? detectTransparentWindows(frameImg, frameCount) : null;
+
+    // --- 4. Draw Captured Photos ---
     for (let i = 0; i < frameCount; i++) {
-      const py = padding + i * (photoH + gap);
-      
       ctx.save();
-      // Draw photo container border/frame
-      drawPhotoBorder(ctx, themeId, padding, py, photoW, photoH);
 
-      const drawH = photoH;
-      const dy = py;
+      let drawX, drawY, drawW, drawH;
+      let useClipping = true;
 
-      // Create rounded clipping path for this photo slot (make corners non-pointy!)
-      ctx.beginPath();
-      roundRect(ctx, padding, dy, photoW, drawH, 16); 
-      ctx.clip();
+      if (detectedSlots && detectedSlots[i]) {
+        // Perfect auto-aligning to transparent holes: Scale detected coordinates to canvas w/h
+        const slot = detectedSlots[i];
+        const scaleX = w / frameImg.width;
+        const scaleY = h / frameImg.height;
+
+        const slotLeft = slot.left * scaleX;
+        const slotTop = slot.top * scaleY;
+        const slotW = slot.width * scaleX;
+        const slotH = slot.height * scaleY;
+
+        // Add 3px bleed overlap on all sides so there are absolutely no subpixel gaps around borders
+        drawX = slotLeft - 3;
+        drawY = slotTop - 3;
+        drawW = slotW + 6;
+        drawH = slotH + 6;
+        useClipping = false; // The custom frame itself is layered on top and clips automatically!
+      } else {
+        // Math fallback
+        const py = padding + i * (photoH + gap);
+        drawX = padding;
+        drawY = py;
+        drawW = photoW;
+        drawH = photoH;
+        
+        drawPhotoBorder(ctx, themeId, padding, py, photoW, photoH);
+      }
+
+      if (useClipping) {
+        ctx.beginPath();
+        roundRect(ctx, drawX, drawY, drawW, drawH, 16);
+        ctx.clip();
+      }
 
       if (photos[i]) {
-        drawCoverImage(ctx, photos[i], padding, dy, photoW, drawH);
+        drawCoverImage(ctx, photos[i], drawX, drawY, drawW, drawH);
       } else {
         // Draw elegant default placeholder
         ctx.fillStyle = '#f3f3f5';
-        ctx.fillRect(padding, dy, photoW, drawH);
+        ctx.fillRect(drawX, drawY, drawW, drawH);
         ctx.fillStyle = '#b0b0bb';
         ctx.font = 'bold 36px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(i + 1, padding + photoW / 2, dy + drawH / 2);
+        ctx.fillText(i + 1, drawX + drawW / 2, drawY + drawH / 2);
       }
       ctx.restore();
     }
