@@ -758,11 +758,55 @@
       }
     }
 
-    for (let i = 0; i < state.frameCount; i++) {
+    const isCustom = state.selectedTheme.startsWith('FRM_') || state.selectedTheme.startsWith('FRM-');
+    const frameImg = isCustom && state.loadedFrames[state.selectedTheme] && state.loadedFrames[state.selectedTheme] !== 'loading' ? state.loadedFrames[state.selectedTheme] : null;
+    const detectedSlots = frameImg ? PhotoThemes.detectTransparentWindows(frameImg) : null;
+    const slotsCount = detectedSlots ? detectedSlots.length : state.frameCount;
+
+    if (detectedSlots && frameImg) {
+      const frameW = frameImg.width || 600;
+      const frameH = frameImg.height || 1800;
+      strip.style.height = (150 * (frameH / frameW)) + 'px';
+      strip.style.padding = '0px';
+      strip.style.gap = '0px';
+    } else {
+      strip.style.height = 'auto';
+      strip.style.padding = '9px'; // Exact 6% padding (same as canvas)
+      strip.style.gap = '3px';      // Exact 2% gap (same as canvas)
+    }
+
+    for (let i = 0; i < slotsCount; i++) {
       const photoDiv = document.createElement('div');
       photoDiv.className = 'strip-photo';
       photoDiv.dataset.index = i;
-      photoDiv.style.border = photoBorder;
+
+      if (detectedSlots && frameImg) {
+        const slot = detectedSlots[i];
+        const pctLeft = (slot.left / frameImg.width) * 100;
+        const pctTop = (slot.top / frameImg.height) * 100;
+        const pctWidth = (slot.width / frameImg.width) * 100;
+        const pctHeight = (slot.height / frameImg.height) * 100;
+        
+        photoDiv.style.position = 'absolute';
+        // Add 1px overflow bleed so there are absolutely no subpixel line gaps around edges
+        photoDiv.style.left = `calc(${pctLeft}% - 1px)`;
+        photoDiv.style.top = `calc(${pctTop}% - 1px)`;
+        photoDiv.style.width = `calc(${pctWidth}% + 2px)`;
+        photoDiv.style.height = `calc(${pctHeight}% + 2px)`;
+        
+        photoDiv.style.borderRadius = '0px';
+        photoDiv.style.border = 'none';
+        photoDiv.style.margin = '0px';
+      } else {
+        photoDiv.style.position = 'relative';
+        photoDiv.style.left = 'auto';
+        photoDiv.style.top = 'auto';
+        photoDiv.style.width = '100%';
+        photoDiv.style.height = 'auto';
+        photoDiv.style.aspectRatio = '4/3';
+        photoDiv.style.border = photoBorder;
+        photoDiv.style.borderRadius = '8px';
+      }
       
       // Auto highlight active selected slot
       if (state.selectedTransformIndex === i) {
@@ -867,6 +911,22 @@
         eventSubtitle.style.fontFamily = 'inherit';
       }
       branding.appendChild(eventSubtitle);
+    }
+    
+    if (detectedSlots && frameImg) {
+      branding.style.position = 'absolute';
+      branding.style.bottom = '8px';
+      branding.style.width = '100%';
+      branding.style.left = '0';
+      branding.style.zIndex = '15';
+      branding.style.pointerEvents = 'none';
+    } else {
+      branding.style.position = 'static';
+      branding.style.bottom = 'auto';
+      branding.style.width = 'auto';
+      branding.style.left = 'auto';
+      branding.style.zIndex = 'auto';
+      branding.style.pointerEvents = 'auto';
     }
     
     strip.appendChild(branding);
