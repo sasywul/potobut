@@ -598,6 +598,16 @@
     // Clear and rebuild photo strip
     strip.innerHTML = '';
 
+    // Fail-safe inline styles to force relative positioning, containment, and perfect canvas proportions
+    // This guarantees the custom frame stays perfectly bound to the strip, bypassing browser/CDN stylesheet cache issues.
+    strip.style.position = 'relative';
+    strip.style.overflow = 'hidden';
+    strip.style.width = '150px';
+    strip.style.padding = '9px'; // Exact 6% padding (same as canvas)
+    strip.style.gap = '3px';      // Exact 2% gap (same as canvas)
+    strip.style.display = 'flex';
+    strip.style.flexDirection = 'column';
+
     // Create custom transparent PNG frame overlay dynamically
     const overlay = document.createElement('img');
     overlay.id = 'customFrameOverlay';
