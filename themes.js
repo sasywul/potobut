@@ -110,7 +110,7 @@ const PhotoThemes = (() => {
       }
 
       // 2. Identify vertical spans of transparent slots
-      const spans = [];
+      let spans = [];
       let inSpan = false;
       let spanStart = 0;
       const minSpanHeight = H * 0.05; // at least 5% of frame height
@@ -134,6 +134,12 @@ const PhotoThemes = (() => {
         if (spanHeight >= minSpanHeight) {
           spans.push({ top: spanStart, bottom: H, height: spanHeight });
         }
+      }
+
+      // Filter out narrow noise spans (e.g. transparent divider lines)
+      if (spans.length > 0) {
+        const maxSpanH = Math.max(...spans.map(s => s.height));
+        spans = spans.filter(s => s.height >= maxSpanH * 0.6); // Must be at least 60% of the largest slot height
       }
 
       // We accept any number of slots between 2 and 8!
