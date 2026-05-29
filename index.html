@@ -212,6 +212,43 @@
 
         <!-- Right Panel: Color Palette & Sticker stamp grid -->
         <div class="workspace-right-controls">
+
+          <!-- Adjust Photo Panel (Dynamic Slot Transform Control) -->
+          <div class="custom-control-section" id="adjustPhotoPanel" style="display: none;">
+            <h3 class="section-title" id="adjustPanelTitle">🛠️ Sesuaikan Foto #1</h3>
+            <div class="adjust-sliders-container">
+              <!-- Slider Zoom -->
+              <div class="slider-control-group">
+                <div class="slider-label-row">
+                  <span class="slider-icon-label">🔎 Perbesar</span>
+                  <span class="slider-val-bubble" id="valZoom">1.0x</span>
+                </div>
+                <input type="range" class="custom-range-slider" id="sliderZoom" min="1.0" max="3.0" step="0.05" value="1.0">
+              </div>
+              
+              <!-- Slider Pan X -->
+              <div class="slider-control-group">
+                <div class="slider-label-row">
+                  <span class="slider-icon-label">↔️ Geser Horisontal</span>
+                  <span class="slider-val-bubble" id="valPanX">0%</span>
+                </div>
+                <input type="range" class="custom-range-slider" id="sliderPanX" min="-50" max="50" step="1" value="0">
+              </div>
+              
+              <!-- Slider Pan Y -->
+              <div class="slider-control-group">
+                <div class="slider-label-row">
+                  <span class="slider-icon-label">↕️ Geser Vertikal</span>
+                  <span class="slider-val-bubble" id="valPanY">0%</span>
+                </div>
+                <input type="range" class="custom-range-slider" id="sliderPanY" min="-50" max="50" step="1" value="0">
+              </div>
+              
+              <button class="btn-reset-transform" id="btnResetTransform">
+                🔄 Reset Setelan Slot
+              </button>
+            </div>
+          </div>
           
           <!-- Frame Color Section -->
           <div class="custom-control-section">

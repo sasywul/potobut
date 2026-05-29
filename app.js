@@ -20,6 +20,8 @@
     isCapturing: false,       // In capture burst block
     currentCaptureIndex: 0,   // Active capture slot index
     retakeIndex: -1,          // Set when re-shooting an individual slot specifically
+    selectedTransformIndex: -1, // Indeks slot foto yang sedang disesuaikan (-1 = tidak ada)
+    photoTransforms: [],      // Parameter transformasi tiap slot: { zoom: 1.0, panX: 0, panY: 0 }
 
     // ---- Admin & Backend State ----
     adminLoggedIn: false,
@@ -102,6 +104,15 @@
       photoStrip: document.getElementById('photoStrip'),
       colorPaletteGrid: document.getElementById('colorPaletteGrid'),
       themePresetsGrid: document.getElementById('themePresetsGrid'),
+      adjustPhotoPanel: document.getElementById('adjustPhotoPanel'),
+      adjustPanelTitle: document.getElementById('adjustPanelTitle'),
+      sliderZoom: document.getElementById('sliderZoom'),
+      sliderPanX: document.getElementById('sliderPanX'),
+      sliderPanY: document.getElementById('sliderPanY'),
+      valZoom: document.getElementById('valZoom'),
+      valPanX: document.getElementById('valPanX'),
+      valPanY: document.getElementById('valPanY'),
+      btnResetTransform: document.getElementById('btnResetTransform'),
 
       // Bottom Actions Halaman 3
       btnCustomDownload: document.getElementById('btnCustomDownload'),
@@ -388,6 +399,56 @@
 
     elements.btnTestDbConnection.addEventListener('click', handleTestConnection);
     elements.btnSaveAdminSettings.addEventListener('click', handleSaveAdminSettings);
+
+    // Dynamic slider adjustments
+    elements.sliderZoom.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      elements.valZoom.textContent = val.toFixed(1) + 'x';
+      const idx = state.selectedTransformIndex;
+      if (idx !== -1 && state.photoTransforms[idx]) {
+        state.photoTransforms[idx].zoom = val;
+        updateLivePhotoTransform(idx);
+      }
+    });
+
+    elements.sliderPanX.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      elements.valPanX.textContent = val + '%';
+      const idx = state.selectedTransformIndex;
+      if (idx !== -1 && state.photoTransforms[idx]) {
+        state.photoTransforms[idx].panX = val;
+        updateLivePhotoTransform(idx);
+      }
+    });
+
+    elements.sliderPanY.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      elements.valPanY.textContent = val + '%';
+      const idx = state.selectedTransformIndex;
+      if (idx !== -1 && state.photoTransforms[idx]) {
+        state.photoTransforms[idx].panY = val;
+        updateLivePhotoTransform(idx);
+      }
+    });
+
+    elements.btnResetTransform.addEventListener('click', () => {
+      const idx = state.selectedTransformIndex;
+      if (idx !== -1 && state.photoTransforms[idx]) {
+        state.photoTransforms[idx] = { zoom: 1.0, panX: 0, panY: 0 };
+        
+        // Reset slider UI
+        elements.sliderZoom.value = 1.0;
+        elements.sliderPanX.value = 0;
+        elements.sliderPanY.value = 0;
+        
+        elements.valZoom.textContent = '1.0x';
+        elements.valPanX.textContent = '0%';
+        elements.valPanY.textContent = '0%';
+        
+        updateLivePhotoTransform(idx);
+        showStatusMessage('Posisi foto slot #' + (idx + 1) + ' berhasil direset! 🔄', 'success');
+      }
+    });
   }
 
   // ---- Page Switching & Routing ----
@@ -417,6 +478,11 @@
     }
 
     if (pageId === 'customizationPage') {
+      // Reset selected slot transformations focus on page entry
+      state.selectedTransformIndex = -1;
+      if (elements.adjustPhotoPanel) {
+        elements.adjustPhotoPanel.style.display = 'none';
+      }
       updatePhotoStrip();
 
       // Auto-upload ke Google Drive & Spreadsheet begitu masuk halaman hasil
@@ -684,15 +750,33 @@
     };
     const photoBorder = borders[state.selectedTheme || 'classic'] || '1px solid rgba(0,0,0,0.06)';
 
+    // Ensure state.photoTransforms is fully initialized
+    if (!state.photoTransforms || state.photoTransforms.length !== state.frameCount) {
+      state.photoTransforms = [];
+      for (let i = 0; i < state.frameCount; i++) {
+        state.photoTransforms.push({ zoom: 1.0, panX: 0, panY: 0 });
+      }
+    }
+
     for (let i = 0; i < state.frameCount; i++) {
       const photoDiv = document.createElement('div');
       photoDiv.className = 'strip-photo';
       photoDiv.dataset.index = i;
       photoDiv.style.border = photoBorder;
+      
+      // Auto highlight active selected slot
+      if (state.selectedTransformIndex === i) {
+        photoDiv.classList.add('selected');
+      }
 
       if (state.capturedFrames[i]) {
         const img = document.createElement('img');
         img.src = state.capturedFrames[i].toDataURL('image/jpeg', 0.9);
+        
+        // Apply individual slot CSS GPU-accelerated transforms
+        const t = state.photoTransforms[i] || { zoom: 1.0, panX: 0, panY: 0 };
+        img.style.transform = `scale(${t.zoom}) translate(${t.panX}%, ${t.panY}%)`;
+        
         photoDiv.appendChild(img);
       } else {
         const placeholder = document.createElement('div');
@@ -701,6 +785,15 @@
         placeholder.innerHTML = `<span>${i + 1}</span>`;
         photoDiv.appendChild(placeholder);
       }
+
+      // Click to select slot for adjustment
+      photoDiv.addEventListener('click', () => {
+        state.selectedTransformIndex = i;
+        document.querySelectorAll('.photo-strip .strip-photo').forEach((el, idx) => {
+          el.classList.toggle('selected', idx === i);
+        });
+        showTransformControls(i);
+      });
 
       strip.appendChild(photoDiv);
     }
@@ -793,14 +886,15 @@
     canvas.width = stripW;
     canvas.height = stripH;
     
-    // Call the PhotoThemes render engine with local settings and preloaded custom frames
+    // Call the PhotoThemes render engine with local settings, preloaded custom frames, and slot transformations
     PhotoThemes.renderTheme(
       state.selectedTheme || 'classic', 
       canvas, 
       state.capturedFrames, 
       state.selectedThemeColor, 
       state.settings,
-      state.loadedFrames
+      state.loadedFrames,
+      state.photoTransforms
     );
 
     return canvas;
@@ -834,6 +928,11 @@
     state.selectedTheme = 'classic';
     state.selectedFilter = 'none';
     state.selectedThemeColor = '#ffffff';
+    state.selectedTransformIndex = -1;
+    state.photoTransforms = [];
+    if (elements.adjustPhotoPanel) {
+      elements.adjustPhotoPanel.style.display = 'none';
+    }
     
     // Reset inputs & lists
     elements.imageUploadInput.value = '';
@@ -879,6 +978,36 @@
     PhotoCamera.setFilter(state.selectedFilter);
     updateCapturedThumbnailsStack();
     updatePhotoStrip();
+  }
+
+  function showTransformControls(index) {
+    const t = state.photoTransforms[index] || { zoom: 1.0, panX: 0, panY: 0 };
+    
+    // Set panel title
+    elements.adjustPanelTitle.textContent = `🛠️ Sesuaikan Foto #${index + 1}`;
+    
+    // Bind slider values
+    elements.sliderZoom.value = t.zoom;
+    elements.sliderPanX.value = t.panX;
+    elements.sliderPanY.value = t.panY;
+    
+    elements.valZoom.textContent = t.zoom.toFixed(1) + 'x';
+    elements.valPanX.textContent = t.panX + '%';
+    elements.valPanY.textContent = t.panY + '%';
+    
+    // Show premium sliders card
+    elements.adjustPhotoPanel.style.display = 'block';
+  }
+
+  function updateLivePhotoTransform(index) {
+    const slot = document.querySelector(`.photo-strip .strip-photo[data-index="${index}"]`);
+    if (slot) {
+      const img = slot.querySelector('img');
+      if (img) {
+        const t = state.photoTransforms[index];
+        img.style.transform = `scale(${t.zoom}) translate(${t.panX}%, ${t.panY}%)`;
+      }
+    }
   }
 
   // ---- Admin Panel Handlers & API ----

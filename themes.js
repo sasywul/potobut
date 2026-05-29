@@ -21,7 +21,7 @@ const PhotoThemes = (() => {
   /**
    * Helper: Draw image preserving aspect ratio (object-fit: cover) inside destination box
    */
-  function drawCoverImage(ctx, img, dx, dy, dw, dh) {
+  function drawCoverImage(ctx, img, dx, dy, dw, dh, transform) {
     const imgW = img.width || 640;
     const imgH = img.height || 480;
 
@@ -44,7 +44,32 @@ const PhotoThemes = (() => {
       sy = (imgH - sh) / 2;
     }
 
-    ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+    // Apply Zoom & Pan adjustments to the cropping coordinates
+    if (transform) {
+      const zoom = transform.zoom || 1.0;
+      const panX = transform.panX || 0; // percentage (-50 to 50)
+      const panY = transform.panY || 0; // percentage (-50 to 50)
+
+      // Calculate zoomed source width and height
+      const swZoomed = sw / zoom;
+      const shZoomed = sh / zoom;
+
+      // Calculate maximum shift allowed to prevent cropping outside the original image bounds
+      const maxShiftX = (sw - swZoomed) / 2;
+      const maxShiftY = (sh - shZoomed) / 2;
+
+      // Map panX and panY (-50 to 50) to actual pixel offset shift
+      // Shifting source crop by opposite direction perfectly matches camera viewfinder pan direction
+      const shiftX = (panX / 50) * maxShiftX;
+      const shiftY = (panY / 50) * maxShiftY;
+
+      const finalSx = sx + (sw - swZoomed) / 2 - shiftX;
+      const finalSy = sy + (sh - shZoomed) / 2 - shiftY;
+
+      ctx.drawImage(img, finalSx, finalSy, swZoomed, shZoomed, dx, dy, dw, dh);
+    } else {
+      ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
   }
 
   /**
@@ -193,8 +218,9 @@ const PhotoThemes = (() => {
    * @param {string} baseColor - Current selected background color
    * @param {Object} adminConfig - Settings config object
    * @param {Object} loadedFrames - Preloaded custom frame images
+   * @param {Array} photoTransforms - Array of custom photo transforms {zoom, panX, panY}
    */
-  function renderTheme(themeId, canvas, photos, baseColor, adminConfig, loadedFrames) {
+  function renderTheme(themeId, canvas, photos, baseColor, adminConfig, loadedFrames, photoTransforms) {
     const ctx = canvas.getContext('2d');
     const w = canvas.width;
     const h = canvas.height;
@@ -266,7 +292,8 @@ const PhotoThemes = (() => {
       }
 
       if (photos[i]) {
-        drawCoverImage(ctx, photos[i], drawX, drawY, drawW, drawH);
+        const t = (photoTransforms && photoTransforms[i]) ? photoTransforms[i] : null;
+        drawCoverImage(ctx, photos[i], drawX, drawY, drawW, drawH, t);
       } else {
         // Draw elegant default placeholder
         ctx.fillStyle = '#f3f3f5';
