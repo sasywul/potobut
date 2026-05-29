@@ -577,7 +577,7 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
     /* The Live Custom Photo Strip Mockup */
     .photo-strip-mockup {
       width: 260px;
-      height: 600px; /* Golden photobooth strip aspect ratio */
+      height: auto;
       background: #ffffff;
       border-radius: 4px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -1043,7 +1043,7 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
               </div>
 
               <!-- Strip Mockup Frame container (3 cuts by default) -->
-              <div class="photo-strip-mockup" id="photoStripMockup" style="height: 520px;">
+              <div class="photo-strip-mockup" id="photoStripMockup" style="height: auto;">
                 <img class="mockup-frame-overlay" id="mockupFrameOverlay" src="" alt="Overlay">
                 
                 <div class="mockup-photo-slot">
@@ -1434,14 +1434,7 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
       
       const strip = document.getElementById('photoStripMockup');
       if (!strip) return;
-      
-      // Update strip height dynamically for landscape cuts
-      const heights = {
-        2: '380px',
-        3: '480px',
-        4: '560px'
-      };
-      strip.style.height = heights[count] || '480px';
+      strip.style.height = 'auto';
       
       // Remove all mockup photo slots
       const slots = strip.querySelectorAll('.mockup-photo-slot');
