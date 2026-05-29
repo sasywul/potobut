@@ -1117,9 +1117,10 @@
         const proxiedUrl = API_BASE + '?action=proxyImage&url=' + encodeURIComponent(frame.url);
         
         // Parse combined name for emote
-        const parts = frame.name.split('|');
+        const frameName = frame.name || '';
+        const parts = frameName.split('|');
         const emoji = parts.length > 1 ? parts[0] : '🖼️';
-        const displayName = parts.length > 1 ? parts.slice(1).join('|') : frame.name;
+        const displayName = parts.length > 1 ? parts.slice(1).join('|') : (frame.name || 'Frame Kustom');
 
         const card = document.createElement('div');
         card.className = 'frame-card';

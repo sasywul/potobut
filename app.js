@@ -850,7 +850,6 @@
     branding.style.alignItems = 'center';
     branding.style.gap = '2px';
     
-    const isCustomFrame = state.selectedTheme.startsWith('FRM_') || state.selectedTheme.startsWith('FRM-');
 
     const themeTitles = {
       classic: state.settings.active_watermark || 'potobut ✦',
@@ -1277,9 +1276,10 @@
 
     // 2. Append new dynamic custom frames from state
     state.customFrames.forEach(frame => {
-      const parts = frame.name.split('|');
+      const frameName = frame.name || '';
+      const parts = frameName.split('|');
       const emoji = parts.length > 1 ? parts[0] : '🖼️';
-      const displayName = parts.length > 1 ? parts.slice(1).join('|') : frame.name;
+      const displayName = parts.length > 1 ? parts.slice(1).join('|') : (frame.name || 'Frame Kustom');
 
       const btn = document.createElement('button');
       btn.className = `theme-preset-btn${state.selectedTheme === frame.id ? ' active' : ''}`;
@@ -1438,9 +1438,10 @@
     }
 
     state.customFrames.forEach(frame => {
-      const parts = frame.name.split('|');
+      const frameName = frame.name || '';
+      const parts = frameName.split('|');
       const emoji = parts.length > 1 ? parts[0] : '🖼️';
-      const displayName = parts.length > 1 ? parts.slice(1).join('|') : frame.name;
+      const displayName = parts.length > 1 ? parts.slice(1).join('|') : (frame.name || 'Frame Kustom');
 
       const card = document.createElement('div');
       card.className = 'active-frame-card';

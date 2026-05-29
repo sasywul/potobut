@@ -1641,9 +1641,10 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
         const proxiedUrl = 'api.php?action=proxyImage&url=' + encodeURIComponent(frame.url);
         
         // Parse combined name for emote
-        const parts = frame.name.split('|');
+        const frameName = frame.name || '';
+        const parts = frameName.split('|');
         const emoji = parts.length > 1 ? parts[0] : '🖼️';
-        const displayName = parts.length > 1 ? parts.slice(1).join('|') : frame.name;
+        const displayName = parts.length > 1 ? parts.slice(1).join('|') : (frame.name || 'Frame Kustom');
 
         card.innerHTML = `
           <div class="frame-card-thumb">
