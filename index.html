@@ -10,8 +10,6 @@
 </head>
 <body>
 
-  <!-- Flash Effect Overlay -->
-  <div class="flash-overlay" id="flashOverlay"></div>
 
   <div class="app-container">
 
@@ -106,6 +104,8 @@
         <div class="camera-center-viewport">
           <div class="camera-preview-container" id="cameraPreviewContainer">
             <video id="videoFeed" autoplay playsinline muted></video>
+            <!-- Flash Effect Overlay (camera-area only) -->
+            <div class="flash-overlay" id="flashOverlay"></div>
             
             <div class="camera-placeholder" id="cameraPlaceholder">
               <div class="camera-placeholder-icon">📷</div>

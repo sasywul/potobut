@@ -1144,19 +1144,25 @@ body {
    EXTRA UTILITIES & EFFECTS
    ============================================================ */
 
-/* Flash Effect */
+/* Flash Effect — subtle, camera-area-only */
 .flash-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  background: white;
+  background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.3) 70%, transparent 100%);
   opacity: 0;
   pointer-events: none;
-  z-index: 1000;
-  transition: opacity 100ms ease;
+  z-index: 50;
+  border-radius: inherit;
 }
 
 .flash-overlay.active {
-  opacity: 0.95;
+  animation: flashPulse 300ms ease-out forwards;
+}
+
+@keyframes flashPulse {
+  0%   { opacity: 0; }
+  15%  { opacity: 0.55; }
+  100% { opacity: 0; }
 }
 
 /* Camera Placeholder Graphic */

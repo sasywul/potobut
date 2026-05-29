@@ -195,8 +195,13 @@ const PhotoCamera = (() => {
   function triggerFlash() {
     const flash = document.getElementById('flashOverlay');
     if (flash) {
+      flash.classList.remove('active');
+      // Force reflow so re-adding the class restarts the animation
+      void flash.offsetWidth;
       flash.classList.add('active');
-      setTimeout(() => flash.classList.remove('active'), 250);
+      flash.addEventListener('animationend', () => {
+        flash.classList.remove('active');
+      }, { once: true });
     }
   }
 
